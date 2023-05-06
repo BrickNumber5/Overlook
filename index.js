@@ -166,16 +166,18 @@ SCENE.add(SUN);
 
 SUN.castShadow = true;
 SUN.shadow.bias = -0.001;
-SUN.shadow.camera.left   = -20;
-SUN.shadow.camera.right  = 20;
-SUN.shadow.camera.top    = 20;
-SUN.shadow.camera.bottom = -20;
+SUN.shadow.camera.left    = -20;
+SUN.shadow.camera.right   = 20;
+SUN.shadow.camera.top     = 20;
+SUN.shadow.camera.bottom  = -20;
+SUN.shadow.mapSize.width  = 2048;
+SUN.shadow.mapSize.height = 2048;
 
 console.log(SUN.shadow);
 
-let sunangle = Math.PI / 2;
+let sunangle = 3 * Math.PI / 4;
 
-let lastT;
+let lastT = 0;
 
 function tick(nextT) {
   if (!nextT) {
@@ -183,14 +185,16 @@ function tick(nextT) {
     return;
   }
   
-  let deltaT = lastT ? nextT - lastT : 0;
-  
-  lastT = nextT;
+  let deltaT = nextT - lastT;
   
   requestAnimationFrame(tick);
   
+  if (deltaT < 1000 / 14) return; // Artificially limit frame rate to 14fps
+  
+  lastT = nextT;
+  
   // Sun light position
-  sunangle += 0.0000025 * deltaT;
+  sunangle += 0.00000025 * deltaT;
   SUN.position.x = Math.cos(sunangle) * 100;
   SUN.position.z = Math.cos(sunangle) * 100;
   SUN.position.y = Math.sin(sunangle) * 100;
