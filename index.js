@@ -193,7 +193,7 @@ LOADER.load( "./assets/slands.glb", (gltf) => {
                    new THREE.TextureLoader().load( "./assets/glyph3.png" ),
                    new THREE.TextureLoader().load( "./assets/glyph4.png" ),
                    new THREE.TextureLoader().load( "./assets/glyph5.png" ), ];
-    for (let i = 0; i < 24; i++) {
+    for (let i = 0; i < 48; i++) {
       let mat = new THREE.SpriteMaterial({ map: glyphs[i % 6] });
       let particle = new THREE.Sprite(mat);
       particle.userData.velocity = new THREE.Vector3();
@@ -226,10 +226,10 @@ const SIGILS = {  };
 
 SCENE.background = new THREE.Color( 0x6f6bf9 );
 
-CAM.position.x = -25;
+CAM.position.x = -20;
 CAM.position.y = 10;
 CAM.position.z = 0;
-CAM.lookAt(0, 0, 10);
+CAM.lookAt(10, 2, 10);
 
 const SUN = new THREE.DirectionalLight(0xffffcc, 1);
 SCENE.add(SUN);
@@ -312,6 +312,7 @@ function tick(nextT) {
      .set(0, 0, 0)
      .add((new THREE.Vector3( 2, 2, 2 )).multiplyScalar(p.userData.scale)
                                         .multiplyScalar(0.5 + (p.userData.max_age - p.userData.age) / p.userData.max_age));
+    p.material.rotation += Math.cos(p.userData.max_age) * deltaT / 1000;
     p.material.color.lerpColors(p.userData.color, new THREE.Color( 0xffffff ), 1 - (p.userData.max_age - p.userData.age) / p.userData.max_age);
   });
   
