@@ -39,6 +39,8 @@ LOADER.load( "./assets/slands.glb", (gltf) => {
     if (m.name !== "River") {
       m.castShadow = true;
       m.receiveShadow = true;
+    } else {
+      console.log(m);
     }
     
     switch (m.name) {
@@ -262,21 +264,30 @@ function tick(nextT) {
   lastT = nextT;
   
   // Sun light position
-  sunangle += 0.00000025 * deltaT;
+  let current_day_fraction;
+  {
+    let d = new Date();
+    let h = d.getHours();
+    let m = d.getMinutes();
+    let s = d.getSeconds();
+    let st = s + (m + h * 60) * 60;
+    current_day_fraction = st / (60 * 60 * 24);
+  }
+  sunangle = current_day_fraction * 2 * Math.PI - 0.5 * Math.PI;
   SUN.position.x = Math.cos(sunangle) * 100;
   SUN.position.z = Math.cos(sunangle) * 100;
   SUN.position.y = Math.sin(sunangle) * 100;
   
   // Island bobbing
   {
-    let off1 = Math.cos(lastT / 10000) * 0.5;
+    let off1 = Math.cos(lastT / 5000) * 0.5;
     ISLANDS.tree.forEach(t => t.obj.position.y = t.orig_y + off1);
     
     
     let off2 = Math.cos(lastT / 10000 + (4 * Math.PI / 3));
     ISLANDS.main.forEach(t => t.obj.position.y = t.orig_y + off2);
     
-    let off3 = Math.cos(lastT / 10000 + (2 * Math.PI / 3)) * 0.3;
+    let off3 = Math.cos(lastT / 5000 + (2 * Math.PI / 3)) * 0.3;
     ISLANDS.warp.forEach(t => t.obj.position.y = t.orig_y + off3);
   }
   
