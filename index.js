@@ -12,6 +12,9 @@ const CAM = new THREE.PerspectiveCamera(
 const RENDERER = new THREE.WebGLRenderer();
 RENDERER.setSize(window.innerWidth, window.innerHeight);
 
+RENDERER.shadowMap.enabled = true;
+RENDERER.shadowMap.soft = false;
+
 document.body.appendChild(RENDERER.domElement);
 
 const MAT = {
@@ -23,14 +26,17 @@ const MAT = {
   unknown: new THREE.MeshToonMaterial({ color: 0x803080 }),
 };
 
-//const MAT = new THREE.MeshToonMaterial({ color: 0x303020 });
-
 const LOADER = new GLTFLoader();
 
 LOADER.load( "./assets/slands.glb", (gltf) => {
   SCENE.add(gltf.scene);
   
   for (let m of gltf.scene.children) {
+    if (m.name !== "River") {
+      m.castShadow = true;
+      m.receiveShadow = true;
+    }
+    
     switch (m.name) {
       case 'island-warp':
       case 'island-tree':
@@ -83,9 +89,63 @@ LOADER.load( "./assets/slands.glb", (gltf) => {
         break;
     }
   }
+  
+  ISLANDS.tree = gltf.scene
+                     .children
+                     .filter(m => [ "island-tree",
+                                    "tree",
+                                    "sigil",
+                                    "bridge-post-7",
+                                    "bridge-post-7001", ].includes(m.name))
+                     .map(m => ({ orig_y: m.position.y, obj: m }));
+  
+  
+  ISLANDS.main = gltf.scene
+                     .children
+                     .filter(m => [ "island-main",
+                                    "windmill-body",
+                                    "windmill-blades",
+                                    "windmill-floor",
+                                    "Cylinder011",
+                                    "windmill-steps-left",
+                                    "windmill-steps-right",
+                                    "Cube001",
+                                    "sigil001",
+                                    "bridge-post-1",
+                                    "bridge-post-2",
+                                    "bridge-post-5",
+                                    "bridge-post-6",
+                                    "dock",
+                                    "dock-stairs",
+                                    "Icosphere003",
+                                    "Cylinder",
+                                    "Cylinder004",
+                                    "Cylinder010",         ].includes(m.name))
+                     .map(m => ({ orig_y: m.position.y, obj: m }));
+  
+  
+  ISLANDS.warp = gltf.scene
+                     .children
+                     .filter(m => [ "island-warp",
+                                    "Cube",
+                                    "bridge-post-3",
+                                    "bridge-post-4",
+                                    "Cylinder001",
+                                    "Cylinder002",
+                                    "Cylinder003",
+                                    "Cylinder005",
+                                    "Cylinder006",
+                                    "Cylinder007",
+                                    "Cylinder008",
+                                    "Cylinder009",   ].includes(m.name))
+                     .map(m => ({ orig_y: m.position.y, obj: m }));
+  
+  tick();
 }, undefined, (err) => {
   console.error( error );
 });
+
+const ISLANDS = { tree: null, main: null, warp: null };
 
 SCENE.background = new THREE.Color( 0x6f6bf9 );
 
@@ -97,16 +157,49 @@ CAM.lookAt(0, 0, 10);
 const SUN = new THREE.DirectionalLight(0xffffcc, 1);
 SCENE.add(SUN);
 
+SUN.castShadow = true;
+SUN.shadow.bias = -0.001;
+SUN.shadow.camera.left   = -20;
+SUN.shadow.camera.right  = 20;
+SUN.shadow.camera.top    = 20;
+SUN.shadow.camera.bottom = -20;
+
+console.log(SUN.shadow);
+
 let sunangle = Math.PI / 4;
 
-function tick() {
+let lastT;
+
+function tick(nextT) {
+  if (!nextT) {
+    requestAnimationFrame(tick);
+    return;
+  }
+  
+  let deltaT = lastT ? nextT - lastT : 0;
+  
+  lastT = nextT;
+  
   requestAnimationFrame(tick);
   
-  sunangle += 0.00025;
+  // Sun light position
+  sunangle += 0.00025 * deltaT;
   SUN.position.x = Math.cos(sunangle) * 100;
   SUN.position.z = Math.cos(sunangle) * 100;
   SUN.position.y = Math.sin(sunangle) * 100;
   
+  // Island bobbing
+  {
+    let off1 = Math.cos(lastT / 10000) * 0.5;
+    ISLANDS.tree.forEach(t => t.obj.position.y = t.orig_y + off1);
+    
+    
+    let off2 = Math.cos(lastT / 10000 + (4 * Math.PI / 3));
+    ISLANDS.main.forEach(t => t.obj.position.y = t.orig_y + off2);
+    
+    let off3 = Math.cos(lastT / 10000 + (2 * Math.PI / 3)) * 0.3;
+    ISLANDS.warp.forEach(t => t.obj.position.y = t.orig_y + off3);
+  }
+  
   RENDERER.render(SCENE, CAM);
 }
-tick();
