@@ -26,7 +26,7 @@ const MAT = {
   stone:   new THREE.MeshToonMaterial({ color: 0xa29a88, gradientMap: TONE_MAP }),
   stone2:  new THREE.MeshToonMaterial({ color: 0x69586b, gradientMap: TONE_MAP, side: THREE.DoubleSide }),
   wood:    new THREE.MeshToonMaterial({ color: 0xaa833e, gradientMap: TONE_MAP }),
-  black:   new THREE.MeshToonMaterial({ color: 0xbcaa65, gradientMap: TONE_MAP }),
+  black:   new THREE.MeshToonMaterial({ color: 0xffe89f, gradientMap: TONE_MAP }),
   unknown: new THREE.MeshToonMaterial({ color: 0x803080, gradientMap: TONE_MAP }),
 };
 
@@ -156,8 +156,10 @@ LOADER.load( "./assets/slands.glb", (gltf) => {
   CAMPFIRE.obj.add(CAMPFIRE.light);
   CAMPFIRE.particles = [];
   {
+    let map = new THREE.TextureLoader().load( "./assets/circle.png" );
     for (let i = 0; i < 40; i++) {
-      let particle = new THREE.Sprite();
+      let mat = new THREE.SpriteMaterial({ map: map });
+      let particle = new THREE.Sprite(mat);
       particle.userData.velocity = new THREE.Vector3();
       particle.userData.velocity.x = Math.random() * 0.8 - 0.4;
       particle.userData.velocity.z = Math.random() * 0.8 - 0.4;
@@ -173,9 +175,6 @@ LOADER.load( "./assets/slands.glb", (gltf) => {
       CAMPFIRE.particles.push(particle);
     }
   }
-  
-  console.log(CAMPFIRE.particles);
-  
   
   tick();
 }, undefined, (err) => {
