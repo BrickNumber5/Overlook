@@ -26,7 +26,7 @@ const MAT = {
   stone:   new THREE.MeshToonMaterial({ color: 0xa29a88, gradientMap: TONE_MAP }),
   stone2:  new THREE.MeshToonMaterial({ color: 0x69586b, gradientMap: TONE_MAP, side: THREE.DoubleSide }),
   wood:    new THREE.MeshToonMaterial({ color: 0xaa833e, gradientMap: TONE_MAP }),
-  black:   new THREE.MeshToonMaterial({ color: 0x101010, gradientMap: TONE_MAP }),
+  black:   new THREE.MeshToonMaterial({ color: 0xbcaa65, gradientMap: TONE_MAP }),
   unknown: new THREE.MeshToonMaterial({ color: 0x803080, gradientMap: TONE_MAP }),
 };
 
@@ -87,6 +87,8 @@ LOADER.load( "./assets/slands.glb", (gltf) => {
         break;
       case 'Cylinder011':
         m.material = MAT.black;
+        m.castShadow = false;
+        m.receiveShadow = false;
         break;
       default:
         m.material = MAT.unknown;
@@ -146,6 +148,35 @@ LOADER.load( "./assets/slands.glb", (gltf) => {
   
   WINDMILL_BLADES.obj = gltf.scene.children.find(m => m.name == "windmill-blades");
   
+  CAMPFIRE.obj = gltf.scene.children.find(m => m.name == "Icosphere003");
+  CAMPFIRE.light = new THREE.PointLight( 0xd66b3d );
+  CAMPFIRE.light.distance = 6;
+  CAMPFIRE.light.position.set( 2.5, 4.5, 3.5 );
+  CAMPFIRE.light.intensity = 4;
+  CAMPFIRE.obj.add(CAMPFIRE.light);
+  CAMPFIRE.particles = [];
+  {
+    for (let i = 0; i < 40; i++) {
+      let particle = new THREE.Sprite();
+      particle.userData.velocity = new THREE.Vector3();
+      particle.userData.velocity.x = Math.random() * 0.8 - 0.4;
+      particle.userData.velocity.z = Math.random() * 0.8 - 0.4;
+      particle.userData.velocity.y = Math.random() * 4 + 1;
+      
+      particle.userData.scale = Math.random() * 2 + 2;
+      
+      particle.userData.max_age = Math.random() * 1000 + 500;
+      particle.userData.age = Math.random() * particle.userData.max_age;
+      
+      CAMPFIRE.obj.add(particle);
+      
+      CAMPFIRE.particles.push(particle);
+    }
+  }
+  
+  console.log(CAMPFIRE.particles);
+  
+  
   tick();
 }, undefined, (err) => {
   console.error( error );
@@ -153,6 +184,7 @@ LOADER.load( "./assets/slands.glb", (gltf) => {
 
 const ISLANDS = { tree: null, main: null, warp: null };
 const WINDMILL_BLADES = { };
+const CAMPFIRE = { };
 
 SCENE.background = new THREE.Color( 0x6f6bf9 );
 
@@ -172,8 +204,6 @@ SUN.shadow.camera.top     = 20;
 SUN.shadow.camera.bottom  = -20;
 SUN.shadow.mapSize.width  = 2048;
 SUN.shadow.mapSize.height = 2048;
-
-console.log(SUN.shadow);
 
 let sunangle = 3 * Math.PI / 4;
 
@@ -213,6 +243,23 @@ function tick(nextT) {
   }
   
   WINDMILL_BLADES.obj.rotation.x += 0.0005 * deltaT;
+  
+  // Campfire
+  CAMPFIRE.light.intensity = Math.random() * 0.5 + 3.75;
+  CAMPFIRE.light.distance = Math.random() * 0.5 + 5.75;
+  CAMPFIRE.particles.forEach(p => {
+    p.position.add(p.userData.velocity);
+    p.userData.age += deltaT;
+    if (p.userData.age > p.userData.max_age) {
+      p.position.set(2.5, 4.5, 3.5);
+      p.userData.age = 0;
+    }
+    p.scale
+     .set(0, 0, 0)
+     .add((new THREE.Vector3( 2, 2, 2 )).multiplyScalar(p.userData.scale)
+                                        .multiplyScalar(0.5 + (p.userData.max_age - p.userData.age) / p.userData.max_age));
+    p.material.color.lerpColors(new THREE.Color( 0x664444 ), new THREE.Color( 0xdddddd ), 1 - (p.userData.max_age - p.userData.age) / p.userData.max_age);
+  });
   
   RENDERER.render(SCENE, CAM);
 }
