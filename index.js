@@ -96,6 +96,8 @@ LOADER.load( "./assets/slands.glb", (gltf) => {
     }
   }
   
+  gltf.scene.children.find(m => m.name == "River").visible = false;
+  
   ISLANDS.tree = gltf.scene
                      .children
                      .filter(m => [ "island-tree",
@@ -176,6 +178,42 @@ LOADER.load( "./assets/slands.glb", (gltf) => {
     }
   }
   
+  SIGILS.objs = gltf.scene
+                     .children
+                     .filter(m => [ "sigil",
+                                    "sigil001",
+                                    "Cube",     ].includes(m.name));
+  
+  console.log(SIGILS);
+  SIGILS.particles = [];
+  {
+    let glyphs = [ new THREE.TextureLoader().load( "./assets/glyph0.png" ),
+                   new THREE.TextureLoader().load( "./assets/glyph1.png" ),
+                   new THREE.TextureLoader().load( "./assets/glyph2.png" ),
+                   new THREE.TextureLoader().load( "./assets/glyph3.png" ),
+                   new THREE.TextureLoader().load( "./assets/glyph4.png" ),
+                   new THREE.TextureLoader().load( "./assets/glyph5.png" ), ];
+    for (let i = 0; i < 24; i++) {
+      let mat = new THREE.SpriteMaterial({ map: glyphs[i % 6] });
+      let particle = new THREE.Sprite(mat);
+      particle.userData.velocity = new THREE.Vector3();
+      particle.userData.velocity.x = Math.random() * 0.14 - 0.08;
+      particle.userData.velocity.z = Math.random() * 0.14 - 0.08;
+      particle.userData.velocity.y = Math.random() * 0.14 - 0.08;
+      
+      particle.userData.color = (new THREE.Color( 0 )).setHSL(Math.random(), 1, 0.6);
+      
+      particle.userData.scale = Math.random() * 0.15 + 0.2;
+      
+      particle.userData.max_age = Math.random() * 3000 + 1500;
+      particle.userData.age = Math.random() * particle.userData.max_age;
+      
+      SCENE.add(particle);
+      
+      SIGILS.particles.push(particle);
+    }
+  }
+  
   tick();
 }, undefined, (err) => {
   console.error( error );
@@ -184,6 +222,7 @@ LOADER.load( "./assets/slands.glb", (gltf) => {
 const ISLANDS = { tree: null, main: null, warp: null };
 const WINDMILL_BLADES = { };
 const CAMPFIRE = { };
+const SIGILS = {  };
 
 SCENE.background = new THREE.Color( 0x6f6bf9 );
 
@@ -258,6 +297,22 @@ function tick(nextT) {
      .add((new THREE.Vector3( 2, 2, 2 )).multiplyScalar(p.userData.scale)
                                         .multiplyScalar(0.5 + (p.userData.max_age - p.userData.age) / p.userData.max_age));
     p.material.color.lerpColors(new THREE.Color( 0x664444 ), new THREE.Color( 0xdddddd ), 1 - (p.userData.max_age - p.userData.age) / p.userData.max_age);
+  });
+  
+  
+  // Glyphs
+  SIGILS.particles.forEach(p => {
+    p.position.add(p.userData.velocity);
+    p.userData.age += deltaT;
+    if (p.userData.age > p.userData.max_age) {
+      p.position.set(0, 0, 0).add(SIGILS.objs[Math.floor(Math.random() * SIGILS.objs.length)].position);
+      p.userData.age = 0;
+    }
+    p.scale
+     .set(0, 0, 0)
+     .add((new THREE.Vector3( 2, 2, 2 )).multiplyScalar(p.userData.scale)
+                                        .multiplyScalar(0.5 + (p.userData.max_age - p.userData.age) / p.userData.max_age));
+    p.material.color.lerpColors(p.userData.color, new THREE.Color( 0xffffff ), 1 - (p.userData.max_age - p.userData.age) / p.userData.max_age);
   });
   
   RENDERER.render(SCENE, CAM);
