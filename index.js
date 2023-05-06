@@ -17,13 +17,17 @@ RENDERER.shadowMap.soft = false;
 
 document.body.appendChild(RENDERER.domElement);
 
+const TONE_MAP = new THREE.TextureLoader().load("./assets/three-tone.jpg");
+TONE_MAP.minFilter = THREE.NearestFilter;
+TONE_MAP.magFilter = THREE.NearestFilter;
+
 const MAT = {
-  ground:  new THREE.MeshToonMaterial({ color: 0x865e47 }),
-  stone:   new THREE.MeshToonMaterial({ color: 0xa29a88 }),
-  stone2:  new THREE.MeshToonMaterial({ color: 0x69586b, side: THREE.DoubleSide }),
-  wood:    new THREE.MeshToonMaterial({ color: 0xaa833e }),
-  black:   new THREE.MeshToonMaterial({ color: 0x101010 }),
-  unknown: new THREE.MeshToonMaterial({ color: 0x803080 }),
+  ground:  new THREE.MeshToonMaterial({ color: 0x865e47, gradientMap: TONE_MAP }),
+  stone:   new THREE.MeshToonMaterial({ color: 0xa29a88, gradientMap: TONE_MAP }),
+  stone2:  new THREE.MeshToonMaterial({ color: 0x69586b, gradientMap: TONE_MAP, side: THREE.DoubleSide }),
+  wood:    new THREE.MeshToonMaterial({ color: 0xaa833e, gradientMap: TONE_MAP }),
+  black:   new THREE.MeshToonMaterial({ color: 0x101010, gradientMap: TONE_MAP }),
+  unknown: new THREE.MeshToonMaterial({ color: 0x803080, gradientMap: TONE_MAP }),
 };
 
 const LOADER = new GLTFLoader();
@@ -140,12 +144,15 @@ LOADER.load( "./assets/slands.glb", (gltf) => {
                                     "Cylinder009",   ].includes(m.name))
                      .map(m => ({ orig_y: m.position.y, obj: m }));
   
+  WINDMILL_BLADES.obj = gltf.scene.children.find(m => m.name == "windmill-blades");
+  
   tick();
 }, undefined, (err) => {
   console.error( error );
 });
 
 const ISLANDS = { tree: null, main: null, warp: null };
+const WINDMILL_BLADES = { };
 
 SCENE.background = new THREE.Color( 0x6f6bf9 );
 
@@ -166,7 +173,7 @@ SUN.shadow.camera.bottom = -20;
 
 console.log(SUN.shadow);
 
-let sunangle = Math.PI / 4;
+let sunangle = Math.PI / 2;
 
 let lastT;
 
@@ -183,7 +190,7 @@ function tick(nextT) {
   requestAnimationFrame(tick);
   
   // Sun light position
-  sunangle += 0.00025 * deltaT;
+  sunangle += 0.0000025 * deltaT;
   SUN.position.x = Math.cos(sunangle) * 100;
   SUN.position.z = Math.cos(sunangle) * 100;
   SUN.position.y = Math.sin(sunangle) * 100;
@@ -200,6 +207,8 @@ function tick(nextT) {
     let off3 = Math.cos(lastT / 10000 + (2 * Math.PI / 3)) * 0.3;
     ISLANDS.warp.forEach(t => t.obj.position.y = t.orig_y + off3);
   }
+  
+  WINDMILL_BLADES.obj.rotation.x += 0.0005 * deltaT;
   
   RENDERER.render(SCENE, CAM);
 }
